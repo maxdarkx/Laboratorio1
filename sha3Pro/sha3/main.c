@@ -38,6 +38,7 @@ int main()
 
 
         hex2bin(data,size,bin);*/
+        free(data);
     }
     else
     {
@@ -46,7 +47,7 @@ int main()
 
     printf("\n");
 
-    free(data);
+
     return 0;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -120,10 +121,10 @@ int archivo(char archivo[30],uint64_t *txt, int *size) //funcion para leer un ar
             }
         }
 
-        
+
         for(i=0;i<p64-1;i++)			//girar los datos de 64 bits para que aparezcan en el orden correcto
         {								//OJO: si el dato es huerfano, ya esta ordenado. por eso solo se ejecuta en p64-1 datos
-        	txt[i]=doblar(txt[i]);
+            txt[i]=doblar(txt[i]);
         }
 
 
@@ -134,8 +135,8 @@ int archivo(char archivo[30],uint64_t *txt, int *size) //funcion para leer un ar
         printf("Datos de 64:%d, Datos sobrantes: %d, Bytes de archivo: %d\t\n",p64-1,pbits,j);
         datashow(txt,p64);
 
-        
-	   for(i=pbits;i<l_int_size;i++)    //se agregan los datos del padding
+
+       for(i=pbits;i<l_int_size;i++)    //se agregan los datos del padding
         {
             txt[p64-1]=(txt[p64-1]|resto[i]);
 
@@ -156,12 +157,12 @@ int archivo(char archivo[30],uint64_t *txt, int *size) //funcion para leer un ar
         }
 
         /*if((pbits+8)>l_int_size)
-		{
-			falt=(pbits+8)-l_int_size;
-			printf("falta:%d\n",falt);
-		    for(i=0;i<falt;i++)
-		    {
-		    	//txt[p64]=txt[p64]<<1;
+        {
+            falt=(pbits+8)-l_int_size;
+            printf("falta:%d\n",falt);
+            for(i=0;i<falt;i++)
+            {
+                //txt[p64]=txt[p64]<<1;
                 if(cont<4)
                 {
                   //  txt[p64]=txt[p64]|1;
@@ -171,11 +172,11 @@ int archivo(char archivo[30],uint64_t *txt, int *size) //funcion para leer un ar
                 {
                     printf("datos0x: %"PRIx64"\n",txt[p64]);
                 }
-		    }
-		}*/
+            }
+        }*/
 
 
-	
+
 
 
 
@@ -247,25 +248,25 @@ void hex2bin(uint64_t *data,int size,int **val) //funcion para convertir datos d
 
 uint64_t doblar(uint64_t d) //gira los datos para que queden en el orden requerido mas adelante
 {
-	uint64_t temp1=0,temp2=0,temp3=0;
-	int i=0;
+    uint64_t temp1=0,temp2=0,temp3=0;
+    int i=0;
 
-	temp1=d;
+    temp1=d;
 
-	for(i=0;i<8;i++)
-	{
-		temp2=temp1 & 0xFF;		//hago una and entre el dato a atrapar y 11111111
-		temp3=temp2 | temp3;	//guardo en el dato anterior el dato actual con el anterior
+    for(i=0;i<8;i++)
+    {
+        temp2=temp1 & 0xFF;		//hago una and entre el dato a atrapar y 11111111
+        temp3=temp2 | temp3;	//guardo en el dato anterior el dato actual con el anterior
 
-		if(i<7)
-		{	
-			temp3=temp3<<8;		//si no he terminado, me muevo ocho posiciones para recibir un nuevo dato
-			temp1=temp1>>8;		//si no he terminado, me muevo ocho posiciones para mostrar el nuevo dato a escribir
-		}
-		//printf("\nt1=%"PRIx64" t2=%"PRIx64" t3=%"PRIx64"\n",temp1,temp2,temp3);
+        if(i<7)
+        {
+            temp3=temp3<<8;		//si no he terminado, me muevo ocho posiciones para recibir un nuevo dato
+            temp1=temp1>>8;		//si no he terminado, me muevo ocho posiciones para mostrar el nuevo dato a escribir
+        }
+        //printf("\nt1=%"PRIx64" t2=%"PRIx64" t3=%"PRIx64"\n",temp1,temp2,temp3);
 
-	}
+    }
 
-	return temp3;
+    return temp3;
 }
 
