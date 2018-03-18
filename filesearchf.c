@@ -6,10 +6,11 @@
 
 void hex2bin(uint64_t *data,int size,int **val); //funcion para convertir datos de hexadecimal a binario
 void datashow(uint64_t *data,int size);  //funcion para mostrar los datos contenidos en un archivo en hexadecimal
-uint64_t* archivo(char archivo[30],uint64_t *txt, int *size); //funcion para leer un archivo y convertirlo a datos binarios
+void stateArrayShow(uint64_t **A); //Muestra el contenido de una matriz tipo State Array
+uint64_t* archivo(char archivo[30], int *size); //funcion para leer un archivo y convertirlo a datos binarios
 uint64_t doblar(uint64_t d); //gira los datos para que queden en el orden requerido mas adelante
 int string(uint64_t *a,int size,int act,uint64_t* b); //funcion que inserta el string a(directo del archivo, con padding) en un arreglo b de 25 posiciones de 64 bits
-void stateArray(uint64_t *s,int size,uint64_t **a);  //funcion para crear un state Array... la famosa Matriz M(w(x+5y)+z)
+void stateArray(uint64_t *s,uint64_t **a);  //funcion para crear un state Array... la famosa Matriz M(w(x+5y)+z)
 
 //programa principal. Se deben crear dos punteros: uno para los datos en 64 bits(data) y otro para los datos binarios (bin)
 //se debe realizar las asignaciones dinamicas desde aca y no en las funciones secundarias.
@@ -19,36 +20,45 @@ int main()
     char arch[]="archivo.txt";
     uint64_t *data;
     uint64_t *S;
+    int i;
     //int **bin;
     int size=0;
     int act=0;
+    uint64_t **A;
 
     //bin=(int **) malloc(sizeof(int *));
 
     
-    if(data==NULL)
-    {
-        printf("ERROR\n");
-    }
-    else
-    {
-        printf("OK");
-    }
     S=(uint64_t *)calloc(25,sizeof(uint64_t));
+    A=(uint64_t **)calloc(5,sizeof(uint64_t *));
+    for(i=0;i<5;i++)
+    {
+    	A[i]=(uint64_t *) calloc(5,sizeof(uint64_t));
+    }
 
-    data=archivo(arch,data,&size);
+
+
+
+
+
+
+
+    data=archivo(arch,&size);
     printf("\nVECTOR A:\n");
     datashow(data,size);
     act=string(data,size,act,S);
-    if(data!=NULL)
-    {    
-        printf("\nVECTOR A:\n");
-    }
     
-    printf("\nVECTOR B:\n");
     datashow(S,25);
+    printf("StateArray\n");
+    stateArray(S,A);
 
-    printf("\n");
+    stateArrayShow(A);
+
+
+
+
+
+
 
     //free(data);
     return 0;
@@ -83,7 +93,7 @@ void datashow(uint64_t *data,int size)  //funcion para mostrar los datos conteni
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-uint64_t* archivo(char archivo[30],uint64_t *txt, int *size) //funcion para leer un archivo y convertirlo a datos binarios
+uint64_t* archivo(char archivo[30], int *size) //funcion para leer un archivo y convertirlo a datos binarios
 {
     FILE *arch;
 
@@ -93,6 +103,7 @@ uint64_t* archivo(char archivo[30],uint64_t *txt, int *size) //funcion para leer
     int p64;               //indicador de pedazos de 64 bits
     uint8_t *resto;         //puntero de 8 bits, ideal para recolectar los datos sobrantes de 8 bits
     int cbits;              //cantidad de bits del string tomado del archivo + 8 bits por el padding
+    uint64_t* txt;			//puntero que recoge los datos del archivo para ser leidos de a 64 bits por vez
 
     arch=fopen(archivo,"rb");       //se lee el nombre del archivo y si es correcto:
 
@@ -106,7 +117,7 @@ uint64_t* archivo(char archivo[30],uint64_t *txt, int *size) //funcion para leer
 
         rewind(arch);               //se devuelve el puntero al inicio del archivo
 
-        txt=(uint64_t *)realloc(txt,(p64)*sizeof(uint64_t));      //se asigna un espacio en memoria segun la cantidad de datos que tenga el archivo
+        txt=(uint64_t *)calloc(p64,sizeof(uint64_t));      //se asigna un espacio en memoria segun la cantidad de datos que tenga el archivo
         resto=(uint8_t *) malloc((pbits+1)*sizeof(uint8_t));			//p64 posiciones por un posible error de padding
 
         fread(txt,sizeof(uint64_t),p64,arch);       //se lee la cantidad de datos que se puedan almacenar en variables de 64 bits
@@ -239,9 +250,11 @@ uint64_t doblar(uint64_t d) //gira los datos para que queden en el orden requeri
 
 	return temp3;
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void stateArray(uint64_t *s,int size,uint64_t **a)  //funcion para crear un state Array... la famosa Matriz M(w(x+5y)+z)
+void stateArray(uint64_t *s,uint64_t **a)  //funcion para crear un state Array... la famosa Matriz M(w(x+5y)+z)
 {
     int i=0,j=0,k=0;
 
@@ -254,7 +267,10 @@ void stateArray(uint64_t *s,int size,uint64_t **a)  //funcion para crear un stat
         }
     }
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int string(uint64_t *a,int size,int act,uint64_t* b) //funcion que inserta el string a(directo del archivo, con padding) en un arreglo b de 25 posiciones de 64 bits
 {
     int i,j;
@@ -272,4 +288,21 @@ int string(uint64_t *a,int size,int act,uint64_t* b) //funcion que inserta el st
         printf("(%d)b: %"PRIx64"\n",act+i,b[i]);
     }
     return act+i;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void stateArrayShow(uint64_t **A) //Muestra el contenido de una matriz tipo State Array
+{
+
+	int i,j;
+	printf("{");
+	for(i=0;i<5;i++)
+	{	
+		printf("[");
+		for(j=0;j<5;j++)
+		{
+			printf("%"PRIx64" ",A[i][j]);
+		}
+		printf("];\n");
+	}
+	printf("{");
 }
