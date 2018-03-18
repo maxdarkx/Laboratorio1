@@ -14,6 +14,13 @@ void stateArray(uint64_t *s,int ***a);  //funcion para crear un state Array... l
 void theta(int **C,int **D,int ***S,int ***S1);
 int mod(int x,int n);
 
+void Theta 	(int ***S,  int ***S1);
+void Rho 	(int ***S1, int ***S2);
+void Pi 	(int ***S2, int ***S3);
+void Chi 	(int ***S3, int ***S4);
+
+
+
 //programa principal. Se deben crear dos punteros: uno para los datos en 64 bits(data) y otro para los datos binarios (bin)
 //se debe realizar las asignaciones dinamicas desde aca y no en las funciones secundarias.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -29,14 +36,15 @@ int main()
 
 //variables necesarias para las transformaciones
 
-    int k,r,k1,t;
-    int **C;
+    int k,r,t;
+    
     int ***S;
     int ***S1;
-    //int ***S2;
-    //int ***S3;
-    //int ***S4;
+    int ***S2;
+    int ***S3;
+    int ***S4;
     int **D;
+    int **C;
 
     S = (int ***) malloc (5*sizeof(int ***));
     for (r = 0; r< 5; r++)
@@ -58,23 +66,35 @@ int main()
         }
     }
 
-
-    C = (int **) malloc(5*sizeof(int *));
-    for (k1 = 0; k1 < 5; k1++)
+    S2 = (int ***) malloc (5*sizeof(int ***));
+    for (r = 0; r< 5; r++)
     {
-        C[k1] = (int *)malloc(64*sizeof(int));
+        S2[r] = (int **) malloc(5*sizeof(int*));
+        for (k = 0; k < 5; k++)
+        {
+            S2[r][k] = (int*)malloc(64*sizeof(int));
+        }
     }
 
-    D = (int **) malloc(5*sizeof(int *));
-    for (k1 = 0; k1 < 5; k1++)
+    S3 = (int ***) malloc (5*sizeof(int ***));
+    for (r = 0; r< 5; r++)
     {
-        D[k1] = (int *)malloc(64*sizeof(int));
+        S3[r] = (int **) malloc(5*sizeof(int*));
+        for (k = 0; k < 5; k++)
+        {
+            S3[r][k] = (int*)malloc(64*sizeof(int));
+        }
     }
-    //S1 = S; // copiar S a matrices auxiliares
-    //S2 = S;
-    //S3 = S;
-    //S4 = S;
 
+    S4 = (int ***) malloc (5*sizeof(int ***));
+    for (r = 0; r< 5; r++)
+    {
+        S4[r] = (int **) malloc(5*sizeof(int*));
+        for (k = 0; k < 5; k++)
+        {
+            S4[r][k] = (int*)malloc(64*sizeof(int));
+        }
+    }
 
     //bin=(int **) malloc(sizeof(int *));
 
@@ -90,16 +110,27 @@ int main()
     act=string(data,size,act,St);
 
     datashow(St,25);
+
     printf("\nStateArray\n");
     stateArray(St,S);
 
     stateArrayShow(S);
 
     printf("\nTheta\n");
-    theta(C,D,S,S1);
+    Theta( S,S1);
     stateArrayShow(S1);
 
+    Rho(S1,S2);
+    printf("\nSALIDA RHO\n");
+    stateArrayShow(S2);
 
+    Pi(S2,S3);
+    printf("\nSALIDA PI\n");
+    stateArrayShow(S3);
+
+    Chi(S3,S4);
+    printf("\nSALIDA CHI\n");
+    stateArrayShow(S4);
 
 
 
@@ -347,6 +378,7 @@ void stateArrayShow(int ***A) //Muestra el contenido de una matriz tipo State Ar
 {
 
     int i,j,k,l;
+    uint64_t z=0;
 
     printf("{\n");
     l=0;
@@ -355,36 +387,47 @@ void stateArrayShow(int ***A) //Muestra el contenido de una matriz tipo State Ar
         printf("[\n ");
         for(j=0;j<5;j++)
         {
-            l=0;
+            z=0;
             for(k=0;k<64;k++)
             {
-                printf("%d",A[i][j][k]);
-
-                if(l==3)
+                z=A[i][j][k] | z;
+                if(k<63)
                 {
-                    printf(" ");
-                    l=0;
+                	z=z<<1;
                 }
-                else
-                {
-                    l++;
-                }
-
+                //printf("%d:(%d,%"PRIx64")\n",k,A[i][j][k],z);
             }
-            printf("\n ");
+            printf("%"PRIx64" ",z);
         }
         printf("];\n");
     }
-    printf("{\n");
+    printf("{\n\n\n");
 }
 
 
-void theta(int **C,int **D,int ***S,int ***S1)
+void Theta(int ***S,int ***S1)
 {
-
+	int **C;
+	int **D;
+	int k1;
     int x,y,z;
     int n,m,o;
-    printf("in");
+
+
+    C = (int **) malloc(5*sizeof(int *));
+    for (k1 = 0; k1 < 5; k1++)
+    {
+        C[k1] = (int *)malloc(64*sizeof(int));
+    }
+
+    D = (int **) malloc(5*sizeof(int *));
+    for (k1 = 0; k1 < 5; k1++)
+    {
+        D[k1] = (int *)malloc(64*sizeof(int));
+    }
+
+
+
     for(x = 0;x<5;x++)
     {
         for (z = 0; z < 64; z++)
@@ -397,16 +440,14 @@ void theta(int **C,int **D,int ***S,int ***S1)
     {
         for (z = 0; z < 64; z++)
         {
-            m=mod(x-1,5);
-            n=mod(x+1,5);
-            o=mod(z-1,64);
+            //m=mod(x-1,5);
+            //n=mod(x+1,5);
+            //o=mod(z-1,64);
 
             D[x][z] = C[mod(x-1,5)][z]^C[mod(x+1,5)][mod(z-1,64)];
 
         }
-        printf("\n");
     }
-    printf("d");
     for(x = 0;x<5;x++)
     {
         for (y = 0; y < 5; y++)
@@ -417,98 +458,81 @@ void theta(int **C,int **D,int ***S,int ***S1)
             }
         }
     }
-    printf("s1");
 }
+
+
+void Rho(int ***S1, int ***S2)
+{
+
+	int x=1;
+	int y=0;
+	int z=0;
+	int t=0;
+	int x1,y1;
+
+
+    for (z = 0; z < 64; z++) 
+    {
+    	S2 [0][0][z] = S1[0][0][z];
+    }
+
+    for (t = 0; t <24; t++) 
+    {
+    	if(t>0)
+    	{
+    		x=x1;
+    		y=y1;
+    	}
+	    for (z = 0; z < 64; z++) 
+	    {
+        	S2 [x][y][z] = S1[x][y][mod(z-(t+1)*(t+2)/2,64)];
+       	}
+       	y1 = mod((2*x+3*y),5);
+        x1 = y;
+        
+    }
+    
+}
+void Pi(int ***S2,int ***S3)
+{
+    int x;
+	int y;
+	int z;
+
+	for(x = 0;x<5;x++)
+	{
+       for (y = 0; y < 5; y++) 
+       {
+           	for (z = 0; z < 64; z++) 
+           	{
+           		S3[x][y][z] = S2[mod(x+3*y,5)][x][z] ;
+
+           	}
+       }
+   }
+}
+
+
+void Chi(int ***S3,int ***S4)
+{
+	int x,y,z;
+
+	for(x = 0;x<5;x++)
+	{
+        for (y = 0; y < 5; y++) 
+        {
+           for (z = 0; z < 64; z++) 
+           {
+	           S4 [x][y][z] = S3 [x][y][z] ^( S3 [mod(x+1,5)][y][z] & S3 [mod(x+2,5)][y][z] ) ;
+           }
+        }
+    }
+}
+
+//void Iota(){}
+
 
 int mod(int x,int n)
 {
     return(x%n+n)%n;
 }
-
-
-/*
-// transformaciones
-   int x;
-   int z;
-   int y;
-   int k,r,k1,t;
-   uint64_t **C;
-   uint64_t ***S;
-   uint64_t ***S1;
-   uint64_t ***S2;
-   uint64_t ***S3;
-   uint64_t ***S4;
-   uint64_t **D;
-
-   S = (uint64_t ***) malloc (5*sizeof(uint64_t ***));
-   for (r = 0; r< 5; r++)
-   {
-      S[r] = (uint64_t **) malloc(5*sizeof(uint64_t*));
-      for (k = 0; k < 5; k++)
-      {
-         S[r][k] = (uint64_t *)malloc(64*sizeof(uint64_t));
-      }
-   }
-   C = (uint64_t **) malloc(5*sizeof(uint64_t *));
-   for (k1 = 0; k1 < 5; k1++)
-   {
-       C[k1] = (uint64_t *)malloc(64*sizeof(uint64_t));
-   }
-   D = (uint64_t **) malloc(5*sizeof(uint64_t *));
-   for (k1 = 0; k1 < 5; k1++)
-   {
-       D[k1] = (uint64_t *)malloc(64*sizeof(uint64_t));
-   }
-   S1 = S; // matrices auxiliares
-   S2 = S;
-   S3 = S;
-   S4 = S;
-   //theta
-   for(x = 0;x<5;x++){
-           for (z = 0; z < 64; z++) {
-                   C[x][z] = S[x][0][z]^S[x][1][z]^S[x][2][z]^S[x][3][z]^S[x][4][z];
-           }
-       }
-       for(x = 0;x<5;x++){
-           for (z = 0; z < 64; z++) {
-                   D[x][z] = C[((x-1)%5)][z]^C[((x+1)%5)][((z-1)%64)];
-                              }
-       }
-       for(x = 0;x<5;x++){
-           for (y = 0; y < 5; y++) {
-               for (z = 0; z < 64; z++) {
-                       S1 [x][y][z] = S[x][y][z] ^ D[x][z];
-               }
-           }
-       }
-       // Rho
-       for (z = 0; z < 64; z++) {
-               S2 [0][0][z] = S1[0][0][z] ;
-       }
-       x= 1;y=0;
-       for (t = 0; t <24; t++) {
-           for (z = 0; z < 64; z++) {
-                   S2 [x][y][z] = S1[x][y][((z-((t+1)*(t+2))/2)%64)];
-           }
-           x = y;
-           y = ((2*x+3*y)%5);
-           }
-            // Pi
-       for(x = 0;x<5;x++){
-           for (y = 0; y < 5; y++) {
-               for (z = 0; z < 64; z++) {
-                       S3 [x][y][z] = S2[((x+3*y)%5)][x][z] ;
-               }
-           }
-       }
-       //chi
-       for(x = 0;x<5;x++){
-           for (y = 0; y < 5; y++) {
-               for (z = 0; z < 64; z++) {
-                       S4 [x][y][z] = S3 [x][y][z] ^( S3 [((x+1)%5)][y][z] & S3 [((x+2)%5)][y][z] ) ;
-                      // printf("%x", S4[x][y][z]);
-               }
-           }
-       }
-       //iota
-*/
