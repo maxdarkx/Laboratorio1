@@ -4,55 +4,110 @@
 #include <stdlib.h>
 #define l_int_size 64
 
-void hex2bin(uint64_t *data,int size,int **val); //funcion para convertir datos de hexadecimal a binario
+void hex2bin(uint64_t data,int *val); //funcion para convertir datos de hexadecimal a binario
 void datashow(uint64_t *data,int size);  //funcion para mostrar los datos contenidos en un archivo en hexadecimal
-void stateArrayShow(uint64_t **A); //Muestra el contenido de una matriz tipo State Array
+void stateArrayShow(int ***A); //Muestra el contenido de una matriz tipo State Array
 uint64_t* archivo(char archivo[30], int *size); //funcion para leer un archivo y convertirlo a datos binarios
 uint64_t doblar(uint64_t d); //gira los datos para que queden en el orden requerido mas adelante
 int string(uint64_t *a,int size,int act,uint64_t* b); //funcion que inserta el string a(directo del archivo, con padding) en un arreglo b de 25 posiciones de 64 bits
-void stateArray(uint64_t *s,uint64_t **a);  //funcion para crear un state Array... la famosa Matriz M(w(x+5y)+z)
+void stateArray(uint64_t *s,int ***a);  //funcion para crear un state Array... la famosa Matriz M(w(x+5y)+z)
 
 //programa principal. Se deben crear dos punteros: uno para los datos en 64 bits(data) y otro para los datos binarios (bin)
 //se debe realizar las asignaciones dinamicas desde aca y no en las funciones secundarias.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int main()
 {
-    char arch[]="archivo.txt";
-    uint64_t *data;
-    uint64_t *S;
-    int i;
+    char arch[]="archivo.txt";		//archivo del cual se lee el mensaje
+    uint64_t *data;					//puntero que recoge los datos que hay en el mensaje
+    uint64_t *St;					//String que recibe los datos del mensaje y lo convierte en cadenas de 1600 bits con padding
+    int i,j;									
     //int **bin;
-    int size=0;
-    int act=0;
-    uint64_t **A;
+    int size=0;						//tamano del String
+    int act=0;						//posicion en la que se esta trabajando en el String
+    int ***A;					//state Array
+
+
+//variables necesarias para las transformaciones
+
+	int x;
+   	int z;
+   	int y;
+   	int k,r,k1,t;
+   	uint64_t **C;
+   	int ***S;
+   	uint64_t ***S1;
+   	uint64_t ***S2;
+   	uint64_t ***S3;
+   	uint64_t ***S4;
+   	uint64_t **D;
+
+   	S = (int ***) malloc (5*sizeof(int ***));
+   	for (r = 0; r< 5; r++)
+   	{
+   	   	S[r] = (int **) malloc(5*sizeof(int*));
+    	for (k = 0; k < 5; k++)
+      	{
+        	S[r][k] = (int*)malloc(64*sizeof(int));
+      	}
+   	}
+
+   	C = (uint64_t **) malloc(5*sizeof(uint64_t *));
+   	for (k1 = 0; k1 < 5; k1++)
+   	{
+   		C[k1] = (uint64_t *)malloc(64*sizeof(uint64_t));
+   	}
+   	
+   	D = (uint64_t **) malloc(5*sizeof(uint64_t *));
+   	for (k1 = 0; k1 < 5; k1++)
+   	{
+    	D[k1] = (uint64_t *)malloc(64*sizeof(uint64_t));
+   	}
+   	//S1 = S; // copiar S a matrices auxiliares
+   	//S2 = S;
+   	//S3 = S;
+   	//S4 = S;
+
 
     //bin=(int **) malloc(sizeof(int *));
 
     
-    S=(uint64_t *)calloc(25,sizeof(uint64_t));
-    A=(uint64_t **)calloc(5,sizeof(uint64_t *));
-    for(i=0;i<5;i++)
+    St=(uint64_t *)calloc(25,sizeof(uint64_t));
+
+    A=(int ***)calloc(5,sizeof(int **));
+    for (i=0;i<5;i++)
     {
-    	A[i]=(uint64_t *) calloc(5,sizeof(uint64_t));
+    	A[i]=(int **) malloc(64*sizeof(int));
+    	for (j=0;j<5;j++)
+    	{
+    		A[i][j]=(int *)malloc(64*sizeof(int));
+   		}	
     }
-
-
-
-
-
-
-
+    
 
     data=archivo(arch,&size);
-    printf("\nVECTOR A:\n");
-    datashow(data,size);
-    act=string(data,size,act,S);
+
+    //printf("\nVECTOR A:\n");
+    //datashow(data,size);
+
+    act=string(data,size,act,St);
     
-    datashow(S,25);
-    printf("StateArray\n");
-    stateArray(S,A);
+    datashow(St,25);
+    printf("\nStateArray\n");
+    stateArray(St,A);
 
     stateArrayShow(A);
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -159,7 +214,7 @@ uint64_t* archivo(char archivo[30], int *size) //funcion para leer un archivo y 
 
 
         printf("Datos de 64:%d, Datos sobrantes: %d, Bytes de archivo: %d\t\n",p64,pbits,cbits);
-        datashow(txt,p64);
+        //datashow(txt,p64);
 
        *size=p64;
         out=0;
@@ -177,7 +232,7 @@ uint64_t* archivo(char archivo[30], int *size) //funcion para leer un archivo y 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void hex2bin(uint64_t *data,int size,int **val) //funcion para convertir datos de hexadecimal a binario
+void hex2bin(uint64_t data,int *val) //funcion para convertir datos de hexadecimal a binario
 {
     uint64_t a=1;   //a, b y temp son variables temporales para la conversion
     uint64_t b=0;
@@ -185,46 +240,17 @@ void hex2bin(uint64_t *data,int size,int **val) //funcion para convertir datos d
 
     int i=0,j=0;    //indices normalmente usados para ciclos
 
-    //int cont=0;     //contador para el manejo de la impresion de los datos
+    //printf("0x%"PRIx64"\n",data);
 
-    //printf("ok\n" );
-
-    for(i=0;i<size;i++)
+    temp=data;
+    for(j=0;j<l_int_size;j++)
     {
-        temp=data[i];
-        printf("0x%"PRIx64"\n",temp);
-
-
-        for(j=0;j<l_int_size;j++)
-        {
-            b=temp & a;                      //para convertir un dato de hexadecimal a binario se realiza una and entre
-            temp=temp>>1;                    // el dato hexa y un 1, quedando al descubierto el dato binario y rotando
-            val[i][l_int_size-j-1]=(int) b;  //el vector resultante una posicion a la derecha, para repetir el proceso
-        }                                    //hasta finalizar la entrada de datos
-    }
-
-
-    printf("matriz de datos:\n");            //se muestra la matriz resultante
-    for(i=0;i<size;i++)
-    {
-        printf("[\t");
-        for(j=0;j<l_int_size;j++)
-        {
-            printf("%d",val[i][j]);
-            if(!((j+1)%8) && j!=0)
-            {
-                printf("\n\t");
-            }
-            if(!((j+1)%4) && j!=0)
-            {
-                printf(" ");
-            }
-        }
-        printf("]\n");
-    }
-
-
+        b=temp & a;                      //para convertir un dato de hexadecimal a binario se realiza una and entre
+        temp=temp>>1;                    // el dato hexa y un 1, quedando al descubierto el dato binario y rotando
+        val[l_int_size-j-1]=(int) b;					 //el vector resultante una posicion a la derecha, para repetir el proceso
+    }                                    //hasta finalizar la entrada de datos
 }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 uint64_t doblar(uint64_t d) //gira los datos para que queden en el orden requerido mas adelante
@@ -254,9 +280,23 @@ uint64_t doblar(uint64_t d) //gira los datos para que queden en el orden requeri
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void stateArray(uint64_t *s,uint64_t **a)  //funcion para crear un state Array... la famosa Matriz M(w(x+5y)+z)
+void stateArray(uint64_t *s,int ***A)  //funcion para crear un state Array... la famosa Matriz M(w(x+5y)+z)
 {
-    int i=0,j=0,k=0;
+
+    int i=0,j=0,k=0,l=0;
+    uint64_t **a;
+    int *bin;
+
+
+    a = (uint64_t **) malloc(5*sizeof(uint64_t *));
+   	for (i = 0; i < 5; i++)
+   	{
+   		a[i] = (uint64_t *)malloc(64*sizeof(uint64_t));
+   	}
+
+	bin = (int *) malloc(64*sizeof(int));
+   	
+
 
     for(i=0;i<5;i++)
     {
@@ -266,6 +306,18 @@ void stateArray(uint64_t *s,uint64_t **a)  //funcion para crear un state Array..
             k++;
         }
     }
+
+
+    for(i=0;i<5;i++)
+    {
+        for(j=0;j<5;j++)
+        {
+        	hex2bin(a[i][j],bin);
+        	for(l=0;l<64;l++)
+        	A[i][j][l]=bin[l];
+        }
+    }
+
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -285,24 +337,160 @@ int string(uint64_t *a,int size,int act,uint64_t* b) //funcion que inserta el st
         {
             b[i]=0x1;
         }
-        printf("(%d)b: %"PRIx64"\n",act+i,b[i]);
+        //printf("(%d)b: %"PRIx64"\n",act+i,b[i]);
     }
     return act+i;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void stateArrayShow(uint64_t **A) //Muestra el contenido de una matriz tipo State Array
+void stateArrayShow(int ***A) //Muestra el contenido de una matriz tipo State Array
 {
 
-	int i,j;
-	printf("{");
+	int i,j,k,l;
+	printf("{\n");
+	l=0;
 	for(i=0;i<5;i++)
 	{	
-		printf("[");
+		printf("[\n ");
 		for(j=0;j<5;j++)
 		{
-			printf("%"PRIx64" ",A[i][j]);
+			l=0;
+			for(k=0;k<64;k++)
+			{
+				printf("%d",A[i][j][k]);
+
+				if(l==3)
+				{
+					printf(" ");
+					l=0;
+				}
+				else
+				{
+					l++;
+				}
+
+			}
+			printf("\n ");
 		}
 		printf("];\n");
 	}
-	printf("{");
+	printf("{\n");
 }
+
+/*
+void theta()
+{
+
+	int x,y,z;
+
+	for(x = 0;x<5;x++)
+	{
+    	for (z = 0; z < 64; z++) 
+    	{
+        	C[x][z] = S[x][0][z]^S[x][1][z]^S[x][2][z]^S[x][3][z]^S[x][4][z];
+        }
+    }
+    
+    for(x = 0;x<5;x++)
+    {
+    	for (z = 0; z < 64; z++) 
+    	{
+        	D[x][z] = C[((x-1)%5)][z]^C[((x+1)%5)][((z-1)%64)];
+        }
+    }
+    
+    for(x = 0;x<5;x++)
+    {
+    	for (y = 0; y < 5; y++) 
+    	{
+        	for (z = 0; z < 64; z++) 
+        	{
+            	S1 [x][y][z] = S[x][y][z] ^ D[x][z];
+            }
+        }
+    }
+}
+// transformaciones
+   int x;
+   int z;
+   int y;
+   int k,r,k1,t;
+   uint64_t **C;
+   uint64_t ***S;
+   uint64_t ***S1;
+   uint64_t ***S2;
+   uint64_t ***S3;
+   uint64_t ***S4;
+   uint64_t **D;
+
+   S = (uint64_t ***) malloc (5*sizeof(uint64_t ***));
+   for (r = 0; r< 5; r++)
+   {
+      S[r] = (uint64_t **) malloc(5*sizeof(uint64_t*));
+      for (k = 0; k < 5; k++)
+      {
+         S[r][k] = (uint64_t *)malloc(64*sizeof(uint64_t));
+      }
+   }
+   C = (uint64_t **) malloc(5*sizeof(uint64_t *));
+   for (k1 = 0; k1 < 5; k1++)
+   {
+       C[k1] = (uint64_t *)malloc(64*sizeof(uint64_t));
+   }
+   D = (uint64_t **) malloc(5*sizeof(uint64_t *));
+   for (k1 = 0; k1 < 5; k1++)
+   {
+       D[k1] = (uint64_t *)malloc(64*sizeof(uint64_t));
+   }
+   S1 = S; // matrices auxiliares
+   S2 = S;
+   S3 = S;
+   S4 = S;
+   //theta
+   for(x = 0;x<5;x++){
+           for (z = 0; z < 64; z++) {
+                   C[x][z] = S[x][0][z]^S[x][1][z]^S[x][2][z]^S[x][3][z]^S[x][4][z];
+           }
+       }
+       for(x = 0;x<5;x++){
+           for (z = 0; z < 64; z++) {
+                   D[x][z] = C[((x-1)%5)][z]^C[((x+1)%5)][((z-1)%64)];
+                              }
+       }
+       for(x = 0;x<5;x++){
+           for (y = 0; y < 5; y++) {
+               for (z = 0; z < 64; z++) {
+                       S1 [x][y][z] = S[x][y][z] ^ D[x][z];
+               }
+           }
+       }
+       // Rho
+       for (z = 0; z < 64; z++) {
+               S2 [0][0][z] = S1[0][0][z] ;
+       }
+       x= 1;y=0;
+       for (t = 0; t <24; t++) {
+           for (z = 0; z < 64; z++) {
+                   S2 [x][y][z] = S1[x][y][((z-((t+1)*(t+2))/2)%64)];
+           }
+           x = y;
+           y = ((2*x+3*y)%5);
+           }
+            // Pi
+       for(x = 0;x<5;x++){
+           for (y = 0; y < 5; y++) {
+               for (z = 0; z < 64; z++) {
+                       S3 [x][y][z] = S2[((x+3*y)%5)][x][z] ;
+               }
+           }
+       }
+       //chi
+       for(x = 0;x<5;x++){
+           for (y = 0; y < 5; y++) {
+               for (z = 0; z < 64; z++) {
+                       S4 [x][y][z] = S3 [x][y][z] ^( S3 [((x+1)%5)][y][z] & S3 [((x+2)%5)][y][z] ) ;
+                      // printf("%x", S4[x][y][z]);
+               }
+           }
+       }
+       //iota
+*/
