@@ -11,6 +11,8 @@ uint64_t* archivo(char archivo[30], int *size); //funcion para leer un archivo y
 uint64_t doblar(uint64_t d); //gira los datos para que queden en el orden requerido mas adelante
 int string(uint64_t *a,int size,int act,uint64_t* b); //funcion que inserta el string a(directo del archivo, con padding) en un arreglo b de 25 posiciones de 64 bits
 void stateArray(uint64_t *s,int ***a);  //funcion para crear un state Array... la famosa Matriz M(w(x+5y)+z)
+void theta(int **C,int **D,int ***S,int ***S1);
+int mod(int x,int n);
 
 //programa principal. Se deben crear dos punteros: uno para los datos en 64 bits(data) y otro para los datos binarios (bin)
 //se debe realizar las asignaciones dinamicas desde aca y no en las funciones secundarias.
@@ -20,69 +22,65 @@ int main()
     char arch[]="archivo.txt";		//archivo del cual se lee el mensaje
     uint64_t *data;					//puntero que recoge los datos que hay en el mensaje
     uint64_t *St;					//String que recibe los datos del mensaje y lo convierte en cadenas de 1600 bits con padding
-    int i,j;									
+    int j;
     //int **bin;
     int size=0;						//tamano del String
     int act=0;						//posicion en la que se esta trabajando en el String
-    int ***A;					//state Array
-
 
 //variables necesarias para las transformaciones
 
-	int x;
-   	int z;
-   	int y;
-   	int k,r,k1,t;
-   	uint64_t **C;
-   	int ***S;
-   	uint64_t ***S1;
-   	uint64_t ***S2;
-   	uint64_t ***S3;
-   	uint64_t ***S4;
-   	uint64_t **D;
+    int k,r,k1,t;
+    int **C;
+    int ***S;
+    int ***S1;
+    //int ***S2;
+    //int ***S3;
+    //int ***S4;
+    int **D;
 
-   	S = (int ***) malloc (5*sizeof(int ***));
-   	for (r = 0; r< 5; r++)
-   	{
-   	   	S[r] = (int **) malloc(5*sizeof(int*));
-    	for (k = 0; k < 5; k++)
-      	{
-        	S[r][k] = (int*)malloc(64*sizeof(int));
-      	}
-   	}
+    S = (int ***) malloc (5*sizeof(int ***));
+    for (r = 0; r< 5; r++)
+    {
+        S[r] = (int **) malloc(5*sizeof(int*));
+        for (k = 0; k < 5; k++)
+        {
+            S[r][k] = (int*)malloc(64*sizeof(int));
+        }
+    }
 
-   	C = (uint64_t **) malloc(5*sizeof(uint64_t *));
-   	for (k1 = 0; k1 < 5; k1++)
-   	{
-   		C[k1] = (uint64_t *)malloc(64*sizeof(uint64_t));
-   	}
-   	
-   	D = (uint64_t **) malloc(5*sizeof(uint64_t *));
-   	for (k1 = 0; k1 < 5; k1++)
-   	{
-    	D[k1] = (uint64_t *)malloc(64*sizeof(uint64_t));
-   	}
-   	//S1 = S; // copiar S a matrices auxiliares
-   	//S2 = S;
-   	//S3 = S;
-   	//S4 = S;
+    S1 = (int ***) malloc (5*sizeof(int ***));
+    for (r = 0; r< 5; r++)
+    {
+        S1[r] = (int **) malloc(5*sizeof(int*));
+        for (k = 0; k < 5; k++)
+        {
+            S1[r][k] = (int*)malloc(64*sizeof(int));
+        }
+    }
+
+
+    C = (int **) malloc(5*sizeof(int *));
+    for (k1 = 0; k1 < 5; k1++)
+    {
+        C[k1] = (int *)malloc(64*sizeof(int));
+    }
+
+    D = (int **) malloc(5*sizeof(int *));
+    for (k1 = 0; k1 < 5; k1++)
+    {
+        D[k1] = (int *)malloc(64*sizeof(int));
+    }
+    //S1 = S; // copiar S a matrices auxiliares
+    //S2 = S;
+    //S3 = S;
+    //S4 = S;
 
 
     //bin=(int **) malloc(sizeof(int *));
 
-    
+
     St=(uint64_t *)calloc(25,sizeof(uint64_t));
 
-    A=(int ***)calloc(5,sizeof(int **));
-    for (i=0;i<5;i++)
-    {
-    	A[i]=(int **) malloc(64*sizeof(int));
-    	for (j=0;j<5;j++)
-    	{
-    		A[i][j]=(int *)malloc(64*sizeof(int));
-   		}	
-    }
-    
 
     data=archivo(arch,&size);
 
@@ -90,13 +88,16 @@ int main()
     //datashow(data,size);
 
     act=string(data,size,act,St);
-    
+
     datashow(St,25);
     printf("\nStateArray\n");
-    stateArray(St,A);
+    stateArray(St,S);
 
-    stateArrayShow(A);
+    stateArrayShow(S);
 
+    printf("\nTheta\n");
+    theta(C,D,S,S1);
+    stateArrayShow(S1);
 
 
 
@@ -176,8 +177,8 @@ uint64_t* archivo(char archivo[30], int *size) //funcion para leer un archivo y 
         resto=(uint8_t *) malloc((pbits+1)*sizeof(uint8_t));			//p64 posiciones por un posible error de padding
 
         fread(txt,sizeof(uint64_t),p64,arch);       //se lee la cantidad de datos que se puedan almacenar en variables de 64 bits
-        
-        
+
+
 
         if (pbits>0)    //si pbits==0, no hay datos huerfanos. pero si los hay, hay que meterlos a la variable de 64 bits
         {
@@ -186,7 +187,7 @@ uint64_t* archivo(char archivo[30], int *size) //funcion para leer un archivo y 
             resto[pbits-1]=0xF8;
             for(i=0;i<pbits;i++)
             {
-                
+
                 if(i<pbits)                           //para meter los datos huerfanos
                 {
                     txt[p64-1]=txt[p64-1]<<8;
@@ -201,16 +202,16 @@ uint64_t* archivo(char archivo[30], int *size) //funcion para leer un archivo y 
         else
         {
             resto[0]=0xF8;
-            for(i=0;i<p64;i++)            
-            {                               
+            for(i=0;i<p64;i++)
+            {
                 txt[i]=doblar(txt[i]);
             }
             //txt[p64-1]=txt[p64-1]<<8;
             txt[p64-1]=(txt[p64-1]|resto[0]);
         }
-        
 
-        
+
+
 
 
         printf("Datos de 64:%d, Datos sobrantes: %d, Bytes de archivo: %d\t\n",p64,pbits,cbits);
@@ -238,7 +239,7 @@ void hex2bin(uint64_t data,int *val) //funcion para convertir datos de hexadecim
     uint64_t b=0;
     uint64_t temp;
 
-    int i=0,j=0;    //indices normalmente usados para ciclos
+    int j=0;    //indices normalmente usados para ciclos
 
     //printf("0x%"PRIx64"\n",data);
 
@@ -255,26 +256,26 @@ void hex2bin(uint64_t data,int *val) //funcion para convertir datos de hexadecim
 
 uint64_t doblar(uint64_t d) //gira los datos para que queden en el orden requerido mas adelante
 {
-	uint64_t temp1=0,temp2=0,temp3=0;
-	int i=0;
+    uint64_t temp1=0,temp2=0,temp3=0;
+    int i=0;
 
-	temp1=d;
+    temp1=d;
 
-	for(i=0;i<8;i++)
-	{
-		temp2=temp1 & 0xFF;		//hago una and entre el dato a atrapar y 11111111
-		temp3=temp2 | temp3;	//guardo en el dato anterior el dato actual con el anterior
+    for(i=0;i<8;i++)
+    {
+        temp2=temp1 & 0xFF;		//hago una and entre el dato a atrapar y 11111111
+        temp3=temp2 | temp3;	//guardo en el dato anterior el dato actual con el anterior
 
-		if(i<7)
-		{	
-			temp3=temp3<<8;		//si no he terminado, me muevo ocho posiciones para recibir un nuevo dato
-			temp1=temp1>>8;		//si no he terminado, me muevo ocho posiciones para mostrar el nuevo dato a escribir
-		}
-		//printf("\nt1=%"PRIx64" t2=%"PRIx64" t3=%"PRIx64"\n",temp1,temp2,temp3);
+        if(i<7)
+        {
+            temp3=temp3<<8;		//si no he terminado, me muevo ocho posiciones para recibir un nuevo dato
+            temp1=temp1>>8;		//si no he terminado, me muevo ocho posiciones para mostrar el nuevo dato a escribir
+        }
+        //printf("\nt1=%"PRIx64" t2=%"PRIx64" t3=%"PRIx64"\n",temp1,temp2,temp3);
 
-	}
+    }
 
-	return temp3;
+    return temp3;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -289,13 +290,13 @@ void stateArray(uint64_t *s,int ***A)  //funcion para crear un state Array... la
 
 
     a = (uint64_t **) malloc(5*sizeof(uint64_t *));
-   	for (i = 0; i < 5; i++)
-   	{
-   		a[i] = (uint64_t *)malloc(64*sizeof(uint64_t));
-   	}
+    for (i = 0; i < 5; i++)
+    {
+        a[i] = (uint64_t *)malloc(64*sizeof(uint64_t));
+    }
 
-	bin = (int *) malloc(64*sizeof(int));
-   	
+    bin = (int *) malloc(64*sizeof(int));
+
 
 
     for(i=0;i<5;i++)
@@ -312,9 +313,9 @@ void stateArray(uint64_t *s,int ***A)  //funcion para crear un state Array... la
     {
         for(j=0;j<5;j++)
         {
-        	hex2bin(a[i][j],bin);
-        	for(l=0;l<64;l++)
-        	A[i][j][l]=bin[l];
+            hex2bin(a[i][j],bin);
+            for(l=0;l<64;l++)
+            A[i][j][l]=bin[l];
         }
     }
 
@@ -345,70 +346,87 @@ int string(uint64_t *a,int size,int act,uint64_t* b) //funcion que inserta el st
 void stateArrayShow(int ***A) //Muestra el contenido de una matriz tipo State Array
 {
 
-	int i,j,k,l;
-	printf("{\n");
-	l=0;
-	for(i=0;i<5;i++)
-	{	
-		printf("[\n ");
-		for(j=0;j<5;j++)
-		{
-			l=0;
-			for(k=0;k<64;k++)
-			{
-				printf("%d",A[i][j][k]);
+    int i,j,k,l;
 
-				if(l==3)
-				{
-					printf(" ");
-					l=0;
-				}
-				else
-				{
-					l++;
-				}
+    printf("{\n");
+    l=0;
+    for(i=0;i<5;i++)
+    {
+        printf("[\n ");
+        for(j=0;j<5;j++)
+        {
+            l=0;
+            for(k=0;k<64;k++)
+            {
+                printf("%d",A[i][j][k]);
 
-			}
-			printf("\n ");
-		}
-		printf("];\n");
-	}
-	printf("{\n");
+                if(l==3)
+                {
+                    printf(" ");
+                    l=0;
+                }
+                else
+                {
+                    l++;
+                }
+
+            }
+            printf("\n ");
+        }
+        printf("];\n");
+    }
+    printf("{\n");
 }
 
-/*
-void theta()
+
+void theta(int **C,int **D,int ***S,int ***S1)
 {
 
-	int x,y,z;
+    int x,y,z;
+    int n,m,o;
+    printf("in");
+    for(x = 0;x<5;x++)
+    {
+        for (z = 0; z < 64; z++)
+        {
+            C[x][z] = S[x][0][z]^S[x][1][z]^S[x][2][z]^S[x][3][z]^S[x][4][z];
+        }
+    }
 
-	for(x = 0;x<5;x++)
-	{
-    	for (z = 0; z < 64; z++) 
-    	{
-        	C[x][z] = S[x][0][z]^S[x][1][z]^S[x][2][z]^S[x][3][z]^S[x][4][z];
-        }
-    }
-    
     for(x = 0;x<5;x++)
     {
-    	for (z = 0; z < 64; z++) 
-    	{
-        	D[x][z] = C[((x-1)%5)][z]^C[((x+1)%5)][((z-1)%64)];
+        for (z = 0; z < 64; z++)
+        {
+            m=mod(x-1,5);
+            n=mod(x+1,5);
+            o=mod(z-1,64);
+
+            D[x][z] = C[mod(x-1,5)][z]^C[mod(x+1,5)][mod(z-1,64)];
+
         }
+        printf("\n");
     }
-    
+    printf("d");
     for(x = 0;x<5;x++)
     {
-    	for (y = 0; y < 5; y++) 
-    	{
-        	for (z = 0; z < 64; z++) 
-        	{
-            	S1 [x][y][z] = S[x][y][z] ^ D[x][z];
+        for (y = 0; y < 5; y++)
+        {
+            for (z = 0; z < 64; z++)
+            {
+                S1 [x][y][z] = S[x][y][z] ^ D[x][z];
             }
         }
     }
+    printf("s1");
 }
+
+int mod(int x,int n)
+{
+    return(x%n+n)%n;
+}
+
+
+/*
 // transformaciones
    int x;
    int z;
