@@ -18,6 +18,15 @@ void Theta 	(int ***S,  int ***S1);
 void Rho 	(int ***S1, int ***S2);
 void Pi 	(int ***S2, int ***S3);
 void Chi 	(int ***S3, int ***S4);
+void Iota	(int ***S4, int ***SF, int r);
+
+const uint64_t RC[25]={ 0x0000000000000001,	0x0000000000008082,	0x800000000000808A,	0x8000000080008000,	0x000000000000808B,
+						0x0000000080000001, 0x8000000080008081, 0x8000000000008009, 0x000000000000008A, 0x0000000000000088,
+						0x0000000080008009, 0x000000008000000A, 0x000000008000808B, 0x800000000000008B, 0x8000000000008089,
+						0x8000000000008003, 0x8000000000008002, 0x8000000000000080, 0x000000000000800A, 0x800000008000000A,
+						0x8000000080008081, 0x8000000000008080, 0x0000000080000001, 0x8000000080008008
+					};
+
 
 
 
@@ -33,7 +42,7 @@ int main()
     //int **bin;
     int size=0;						//tamano del String
     int act=0;						//posicion en la que se esta trabajando en el String
-
+    
 //variables necesarias para las transformaciones
 
     int k,r,t;
@@ -43,6 +52,7 @@ int main()
     int ***S2;
     int ***S3;
     int ***S4;
+    int ***S5;
     int **D;
     int **C;
 
@@ -96,6 +106,16 @@ int main()
         }
     }
 
+    S5 = (int ***) malloc (5*sizeof(int ***));
+    for (r = 0; r< 5; r++)
+    {
+        S5[r] = (int **) malloc(5*sizeof(int*));
+        for (k = 0; k < 5; k++)
+        {
+            S5[r][k] = (int*)malloc(64*sizeof(int));
+        }
+    }
+
     //bin=(int **) malloc(sizeof(int *));
 
 
@@ -133,7 +153,7 @@ int main()
     stateArrayShow(S4);
 
 
-
+    Iota(S4,S5,1);
 
 
 
@@ -529,10 +549,18 @@ void Chi(int ***S3,int ***S4)
     }
 }
 
-//void Iota(){}
-
+void Iota(int ***S4,int ***SF, int r)
+{
+	int i,temp;
+	for(i=0;i<64;i++)
+	{
+		temp=(RC[r]>>i)&1;
+		//printf("%dTEMP=%d,%"PRIx64"\n",i,temp,RC[r]);
+		SF[0][0][63-i]=S4[0][0][63-i]^temp; //temp me trae los bits en el orden inverso a como se encuentran en el vector
+	}										//toca usar polvos magicos para hacer la operacion bien.
+}
 
 int mod(int x,int n)
 {
-    return(x%n+n)%n;
+    return(x%n+n)%n;	//dolores de cabeza...resueltos.
 }
