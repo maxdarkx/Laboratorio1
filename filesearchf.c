@@ -2,6 +2,7 @@
 
 #include <inttypes.h>
 #include <stdlib.h>
+#include <string.h>
 #define l_int_size 64
 
 
@@ -12,18 +13,18 @@ uint64_t* archivo(char archivo[30],uint64_t *txt, int size); //funcion para leer
 uint64_t doblar(uint64_t d); //gira los datos para que queden en el orden requerido mas adelante
 int string(uint64_t *a,int size,int act,uint64_t* b); //funcion que inserta el string a(directo del archivo, con padding) en un arreglo b de 25 posiciones de 64 bits
 void stateArray(uint64_t *s,uint64_t **a);  //funcion para crear un state Array... la famosa Matriz M(w(x+5y)+z)
-void theta(uint64_t **S,uint64_t **S1);
-int mod(int x,int n);
-int tamano(char archivo[]);
+int mod(int x,int n);							//funcion para hallar el modulo de una division
+int tamano(char archivo[]);						//funcion que halla el tamano de un archivo en bytes
+void muestrahash(uint64_t **S);					//funcion que muestra el hash resultante
 
 
-
-void Theta 	(uint64_t **S,  uint64_t **S1);
+void Theta 	(uint64_t **S,  uint64_t **S1);		//iteraciones y conversiones requeridas
 void Rho 	(uint64_t **S1, uint64_t **S2);
 void Pi 	(uint64_t **S2, uint64_t **S3);
 void Chi 	(uint64_t **S3, uint64_t **S4);
 void Iota	(uint64_t **S4, uint64_t **SF, int r);
-void Ronda ();
+void Ronda  (uint64_t **S,  uint64_t **SF);
+
 
 const uint64_t RC[25]={ 0x0000000000000001,	0x0000000000008082,	0x800000000000808A,	0x8000000080008000,	0x000000000000808B,
 						0x0000000080000001, 0x8000000080008081, 0x8000000000008009, 0x000000000000008A, 0x0000000000000088,
@@ -38,9 +39,9 @@ const uint64_t RC[25]={ 0x0000000000000001,	0x0000000000008082,	0x80000000000080
 //programa principal. Se deben crear dos punteros: uno para los datos en 64 bits(data) y otro para los datos binarios (bin)
 //se debe realizar las asignaciones dinamicas desde aca y no en las funciones secundarias.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-int main()
+int main(int num, char **dat)
 {
-    char arch[]="archivo.txt";		//archivo del cual se lee el mensaje
+    char arch[20];		//archivo del cual se lee el mensaje
     uint64_t *data;					//puntero que recoge los datos que hay en el mensaje
     uint64_t *St;					//String que recibe los datos del mensaje y lo convierte en cadenas de 1600 bits con padding
     int i,j;
@@ -51,10 +52,10 @@ int main()
 //variables necesarias para las transformaciones
 
     int k,r,t;    
-    uint64_t **S;
-    uint64_t **SF;
+    uint64_t **S;	//State array
+    uint64_t **SF;	//state array final
     
-    //bin=(int **) malloc(sizeof(int *));
+    
 
 
     St=(uint64_t *)calloc(25,sizeof(uint64_t));
@@ -72,29 +73,52 @@ int main()
     }
 
 
-    size=tamano(arch);
-    p64=8*size/64+1;
-    data=(uint64_t *) calloc(p64,sizeof(uint64_t));
-
-    archivo(arch,data,size);
-    if(p64==0)
+    if (num==2)
     {
-        p64++;
+    	
+    	strcpy(arch,dat[1]);
     }
-    printf("\nVECTOR A:\n");
-    datashow(data,p64);
+    else
+    {
+    	strcpy(arch,"archivo.txt");
+    }
 
-    act=string(data,p64,act,St);
 
-    printf("\nString\n");
-    datashow(St,25);
+    size=tamano(arch);	//se halla el tamano del archivo
 
-    printf("\nStateArray\n");
-    stateArray(St,S);
-    stateArrayShow(S);
-    Ronda(S,SF);
-    //free(data);
-    return 0;
+    if(size!=-1)
+    {
+	    p64=8*size/64+1;		//se toman datos de 64 bits del archivo
+	    data=(uint64_t *) calloc(p64,sizeof(uint64_t));
+
+	    archivo(arch,data,size);	//se lee el archivo y se llena la variable data con todo el archivo
+	    if(p64==0)					//si no hay datos debo considerar que al menos debo tener el padding
+	    {
+	        p64++;
+	    }
+	    //printf("\nVECTOR A:\n");
+	    //datashow(data,p64);
+
+	    act=string(data,p64,act,St);		//lleno el array St, que le agrega el padding y lo ordena en cadenas de 1600 bits
+
+	    //printf("\nString\n");
+	    //datashow(St,25);
+
+	    printf("\nHash: ");
+	    stateArray(St,S);				//se calcula el state array
+	    //stateArrayShow(S);
+	    Ronda(S,SF);					//se realizan las iteraciones necesarias para el resultado
+
+	}
+	else
+	{
+		printf("\nNombre de archivo no valido\n");
+	}
+	printf("\nHash: ");
+
+	free(data);
+
+	return 0;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -122,9 +146,35 @@ void datashow(uint64_t *data,int size)  //funcion para mostrar los datos conteni
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void muestrahash(uint64_t **s) //funcion para mostrar el hash y en el orden correcto 
+{
+	int i,j,k;
+	uint64_t temp=0,show;
+	int l=0;
 
+	for(i=0;i<5;i++)
+	{
+		for(j=0;j<5;j++)
+		{
+			temp=s[j][i];
+			for(k=0;k<8;k++)
+			{
+				if(l<8)
+				{
+					show=temp & 0xFF;
+					printf("%"PRIx64,show);
+					temp=temp>>8;
+				}
+			}	
+			printf(" ");
+			l++;
+		}		
+	}
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Ronda(uint64_t **S, uint64_t **SF)
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Ronda(uint64_t **S, uint64_t **SF)		//funcion para realizar las rondas para hallar el hash
 {
     uint64_t **S1;
     uint64_t **S2;
@@ -181,7 +231,7 @@ void Ronda(uint64_t **S, uint64_t **SF)
         Pi(S2,S3);
         Chi(S3,S4);
         Iota(S4,S5,r);
-
+        /*
         if(r==0 || r==23 )
         {
             printf("Ronda %d",r);            
@@ -199,12 +249,20 @@ void Ronda(uint64_t **S, uint64_t **SF)
 
             printf("\nSALIDA IOTA\n");
             stateArrayShow(S5);
-        }
+        }*/
 
     }
+    muestrahash(S5);
+
+    free(S);
+    free(S1);
+    free(S2);
+    free(S3);
+    free(S4);
+    free(S5);
 }
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -213,10 +271,16 @@ int tamano(char archivo[])
     int j;
     FILE *arch;
     arch=fopen(archivo,"rb");       //se lee el nombre del archivo y si es correcto:    
-    
-    fseek(arch,0,SEEK_END);     //se lee todo el archivo para verificar la cantidad de datos contenidos
-    j=ftell(arch);              //y se guarda en j
-    
+    if(arch!=NULL)
+    {
+        fseek(arch,0,SEEK_END);     //se lee todo el archivo para verificar la cantidad de datos contenidos
+       	j=ftell(arch);              //y se guarda en j
+    }
+    else
+    {
+    	printf("\nNo se encuentra el archivo\n");
+    	j=-1;
+    }
     fclose(arch);
     return j;
 }
@@ -273,9 +337,6 @@ uint64_t* archivo(char archivo[30],uint64_t *txt, int size) //funcion para leer 
                 {
                     txt[p64-1]=txt[p64-1]<<8;
                 }
-                printf("\nAqui\n");
-                printf("%"PRIx64"\n",(uint64_t)resto[pbits-i]);
-                printf("%"PRIx64"\n",txt[p64-1]);
             
             }
             //txt[p64-1]=doblar(txt[p64-1]);
@@ -299,7 +360,7 @@ uint64_t* archivo(char archivo[30],uint64_t *txt, int size) //funcion para leer 
     }
     else
     {
-        //printf("No se encuentra el archivo");
+        printf("No se encuentra el archivo");
         out=1; //si hay algun error con la lectura del archivo se retorna 1
     }
     //free(resto);
@@ -387,7 +448,7 @@ int string(uint64_t *a,int size,int act,uint64_t* b) //funcion que inserta el st
         {
             if (i<17)
             {
-                printf("\nsize=%d,%"PRIx64,size,a[act+i]);
+                //printf("\nsize=%d,%"PRIx64,size,a[act+i]);
                 b[i]=a[act+i];
             }
         }
@@ -419,7 +480,9 @@ void stateArrayShow(uint64_t **A) //Muestra el contenido de una matriz tipo Stat
     }
     printf("{\n\n\n");
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Theta(uint64_t **S,uint64_t **S1)
 {
 	uint64_t *C;
@@ -453,7 +516,9 @@ void Theta(uint64_t **S,uint64_t **S1)
         }
     }
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Rho(uint64_t **S1, uint64_t **S2)
 {
@@ -485,6 +550,9 @@ void Rho(uint64_t **S1, uint64_t **S2)
         
     }  
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Pi(uint64_t **S2,uint64_t **S3)
 {
     int x;
@@ -501,7 +569,9 @@ void Pi(uint64_t **S2,uint64_t **S3)
    }
    
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Chi(uint64_t **S3,uint64_t **S4)
 {
@@ -515,6 +585,9 @@ void Chi(uint64_t **S3,uint64_t **S4)
         }
     }
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Iota(uint64_t **S4,uint64_t **SF, int r)
 {
@@ -535,8 +608,11 @@ void Iota(uint64_t **S4,uint64_t **SF, int r)
 	
 	SF[0][0]=S4[0][0]^temp; 
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int mod(int x,int n)
 {
     return(x%n+n)%n;	//dolores de cabeza...resueltos.
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////end
