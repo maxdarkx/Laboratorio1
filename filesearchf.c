@@ -395,12 +395,12 @@ int archivo(char archivo[30],uint64_t *txt, int size) //funcion para leer un arc
             p64++;
 
             fread(resto,sizeof(uint8_t),pbits,arch);    // y de 8 bits huerfanas
-            resto[pbits]=0x1F;
+            resto[pbits-1]=0x1F;
 
 
             for(i=pbits;i>=0;i--)
             {
-                    printf("resto:%"PRIx64"\n",(uint64_t)resto[i]);
+                    printf("resto[%d]:%"PRIx64"\n",i,(uint64_t)resto[i]);
                 if(i<=pbits)                           //para meter los datos huerfanos
                 {
                     txt[p64-1]=txt[p64-1]<<8;
@@ -421,7 +421,7 @@ int archivo(char archivo[30],uint64_t *txt, int size) //funcion para leer un arc
                 txt[i]=doblar(txt[i]);
             }*/
             //txt[p64-1]=txt[p64-1]<<8;
-            txt[p64-1]=(txt[p64-1]|resto[0]);
+            txt[p64]=(txt[p64]|resto[0]);
         }
 
         printf("Datos de 64:%d, Datos sobrantes: %d, Bytes de archivo: %d\t\n",p64,pbits,size);
