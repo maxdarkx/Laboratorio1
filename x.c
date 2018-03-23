@@ -15,7 +15,7 @@ int string(uint64_t *a,int size,int act,uint64_t* b); //funcion que inserta el s
 void stateArray(uint64_t *s,uint64_t **a);  //funcion para crear un state Array... la famosa Matriz M(w(x+5y)+z)
 int mod(int x,int n);                           //funcion para hallar el modulo de una division
 int tamano(char archivo[]);                     //funcion que halla el tamano de un archivo en bytes
-void muestrahash(uint64_t **S);                 //funcion que muestra el hash resultante
+void muestrahash(uint64_t **S,int bits);                 //funcion que muestra el hash resultante
 
 
 void Theta  (uint64_t **S,  uint64_t **S1);     //iteraciones y conversiones requeridas
@@ -25,7 +25,7 @@ void Chi    (uint64_t **S3, uint64_t **S4);
 void Iota   (uint64_t **S4, uint64_t **SF, int r);
 void Ronda  (uint64_t **S,  uint64_t **SF);
 
-void Keccak (uint64_t *msg, int sz64);
+void Keccak (uint64_t *msg, int sz64, int bits);
 void xor64  (uint64_t **S1,  uint64_t **S2);
 
 const uint64_t RC[25]={ 0x0000000000000001, 0x0000000000008082, 0x800000000000808A, 0x8000000080008000, 0x000000000000808B,
@@ -46,16 +46,29 @@ int main(int num, char **dat)
     char arch[20];      //archivo del cual se lee el mensaje
     uint64_t *data;                 //puntero que recoge los datos que hay en el mensaje
     int size=0,p64;                     //tamano del String
-
+    int verBits;
 
 
     if (num==2)
     {
         strcpy(arch,dat[1]);
+        verBits=1088;
+    }
+    else if (num==3)
+    {
+        strcpy(arch,dat[1]);
+        verBits=atoi(dat[2]);
+    }
+    else if(num==0)
+    {
+        strcpy(arch,"archivo.txt");
+        verBits=1088;
     }
     else
     {
         strcpy(arch,"archivo.txt");
+        verBits=1088;
+        printf("Demasiados argumentos. Usando configuracion estandar. Archivo.txt 1088 bits\n\n");
     }
 
 
@@ -71,7 +84,7 @@ int main(int num, char **dat)
         {
             p64++;
         }
-        Keccak(data,p64);
+        Keccak(data,p64,verBits);
     }
     else
     {
@@ -96,7 +109,7 @@ int string(uint64_t *a,int size,int act,uint64_t* b) //funcion que inserta el st
         if((act)<size && i<17)
         {
             b[i]=a[act];
-            printf("\n1(%d,%d,%d)\n",i,size,act);
+            //printf("\n1(%d,%d,%d)\n",i,size,act);
             act++;
 
             
@@ -104,7 +117,7 @@ int string(uint64_t *a,int size,int act,uint64_t* b) //funcion que inserta el st
         }
         if(i==16 && act==size)
         {
-                printf("\n2(%d,%d,%d)\n",i,size,act);
+               // printf("\n2(%d,%d,%d)\n",i,size,act);
                 b[i]=b[i]|0x8000000000000000;
         }
         
@@ -117,7 +130,7 @@ int string(uint64_t *a,int size,int act,uint64_t* b) //funcion que inserta el st
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void Keccak (uint64_t *msg, int sz64)
+void Keccak (uint64_t *msg, int sz64,int bits)
 {
     int i,j,k,r=0;
     int cont=0;
@@ -153,13 +166,13 @@ void Keccak (uint64_t *msg, int sz64)
 
         cont=string(msg,sz64,cont,St);        //lleno el array St, que le agrega el padding y lo ordena en cadenas de 1600 bits
 
-        printf("\n%d,%d,%d Dato\n",i,r,cont);
+        //printf("\n%d,%d,%d Dato\n",i,r,cont);
 
         stateArray(St,S);               //se calcula el state array
-        printf("S %d/%d\n",i,r);
-        stateArrayShow(S);
-        printf("SF %d/%d\n",i,r);
-        stateArrayShow(SF);
+        //printf("S %d/%d\n",i,r);
+        //stateArrayShow(S);
+        //printf("SF %d/%d\n",i,r);
+        //stateArrayShow(SF);
 
         xor64(S,SF);    //se calcula la xor entre el dato anterior y el dato actual, y se retorna en S
 
@@ -171,13 +184,15 @@ void Keccak (uint64_t *msg, int sz64)
             }
         }
         Ronda(S,SF);                    //se realizan las iteraciones necesarias para el resultado
-        printf("SF %d/%d\n",i,r);
-        stateArrayShow(SF);
-        muestrahash(SF);
+        //printf("SF %d/%d\n",i,r);
+        //stateArrayShow(SF);
         i++;
     }while(i<=r);
-
-    printf("Hash\n");
+    printf("Hash: ");
+    muestrahash(SF,bits);
+    printf("\n");
+        
+    
 
     free(St);
     free(S);
@@ -223,29 +238,36 @@ void datashow(uint64_t *data,int size)  //funcion para mostrar los datos conteni
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void muestrahash(uint64_t **s) //funcion para mostrar el hash y en el orden correcto
+void muestrahash(uint64_t **s, int bits) //funcion para mostrar el hash y en el orden correcto
 {
     int i,j,k;
     uint64_t temp=0,show;
     int l=0;
+    char string[9];
+
+    int contbits=0;
 
     for(i=0;i<5;i++)
     {
         for(j=0;j<5;j++)
         {
             temp=s[j][i];
-            for(k=0;k<8;k++)
+            if(contbits<bits-1)
             {
-                if(l<8)
+                for(k=0;k<8;k++)
                 {
                     show=temp & 0xFF;
-                    printf("%"PRIx64,show);
                     temp=temp>>8;
+                    contbits+=8;
+                    sprintf(string,"%lx",show);
+                    printf("%s",string);
                 }
+                        
+                printf(" ");
             }
-            printf(" ");
-            l++;
+            //printf("\ncontbits: %d\n",contbits);
         }
+
     }
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -361,71 +383,47 @@ int tamano(char archivo[])
 
 
 
-int archivo(char archivo[30],uint64_t *txt, int size) //funcion para leer un archivo y convertirlo a datos binarios
+int archivo(char archivo[30],uint64_t *fil, int size) //funcion para leer un archivo y convertirlo a datos binarios
 {
     FILE *arch;
 
-    int i=0;        //indices utilizados para los ciclos
+    int i=0,j=0,k=0;        //indices utilizados para los ciclos
     int out=0;          //out indica si hay errores en la conversion
     int pbits;            //indica  la cantidad de pedazos de 8 bits que quedan sobrando
     int p64;               //indicador de pedazos de 64 bits
-    uint8_t *resto;         //puntero de 8 bits, ideal para recolectar los datos sobrantes de 8 bits
+    uint8_t *txt;         //puntero de 8 bits, para recolectar los datos directamente del archivo, de 8 bits
 
-
+    pbits=size+1;         //se calcula la cantidad de datos de 8 bits + padding
+    p64=8*size/64+1;      //asi como la cantidad de datos de 64 bits + padding
+    txt= (uint8_t*)malloc(pbits*sizeof(uint8_t));
     arch=fopen(archivo,"rb");       //se lee el nombre del archivo y si es correcto:
 
     if(arch!=NULL)
     {
-        //cbits=j+1;
-        pbits=((size*8)%64)/8;         //se calcula la cantidad de datos huerfanos de 8 bits
-        p64=8*size/64;                 //asi como la cantidad de datos de 64 bits
+        fread(txt,sizeof(uint8_t),pbits-1,arch);       //se lee la cantidad de datos que se puedan almacenar en variables de 64 bits
+        txt[pbits-1]=0x1F;
 
-        resto=(uint8_t *) malloc((pbits+1)*sizeof(uint8_t));            //p64 posiciones por un posible error de padding
-
-        fread(txt,sizeof(uint64_t),p64,arch);       //se lee la cantidad de datos que se puedan almacenar en variables de 64 bits
-
-        if(p64==0)
+        
+        for(i=0;i<p64;i++)
         {
-            pbits++;
-        }
-
-
-        if (pbits>0)    //si pbits==0, no hay datos huerfanos. pero si los hay, hay que meterlos a la variable de 64 bits
-        {
-            p64++;
-
-            fread(resto,sizeof(uint8_t),pbits,arch);    // y de 8 bits huerfanas
-            resto[pbits]=0x1F;
-
-
-            for(i=pbits;i>=0;i--)
+            k=8*(i+1)-1;
+            for(j=0;j<8;j++)
             {
-                    printf("resto:%"PRIx64"\n",(uint64_t)resto[i]);
-                if(i<=pbits)                           //para meter los datos huerfanos
+            
+                fil[i]=fil[i]|txt[k];
+                if (j<7)
                 {
-                    txt[p64-1]=txt[p64-1]<<8;
+                    fil[i]=fil[i]<<8;
                 }
-                txt[p64-1]=(txt[p64-1]|((uint64_t)resto[i]));       //se utiliza una or y sucesivas rotaciones de datos hacia la izquierda
-                
+                k--;
+            
 
             }
-            //txt[p64-1]=doblar(txt[p64-1]);
-
-        }
-        else
-        {
-            resto[0]=0x1F;
-
-            /*for(i=0;i<p64;i++)
-            {
-                txt[i]=doblar(txt[i]);
-            }*/
-            //txt[p64-1]=txt[p64-1]<<8;
-            txt[p64-1]=(txt[p64-1]|resto[0]);
         }
 
-        printf("Datos de 64:%d, Datos sobrantes: %d, Bytes de archivo: %d\t\n",p64,pbits,size);
-        datashow(txt,p64);
+
+        //printf("Datos de 64:%d, Datos sobrantes: %d, Bytes de archivo: %d\t\n",p64,pbits,size);
+        //datashow(fil,p64);
         out=0;
     }
     else
@@ -502,7 +500,6 @@ void stateArray(uint64_t *s,uint64_t **a)  //funcion para crear un state Array..
             k++;
         }
     }
-    printf("ArrayReady\n");
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
